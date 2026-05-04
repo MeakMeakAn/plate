@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f4ede0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="The Day's Plate">
+<title>The Day's Plate</title>
+
+<!-- PWA manifest inlined as data URI -->
+<link rel="manifest" href='data:application/manifest+json,{"name":"The Day%27s Plate","short_name":"Plate","start_url":".","display":"standalone","background_color":"%23f4ede0","theme_color":"%23f4ede0","orientation":"portrait","icons":[{"src":"data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 192 192%22><rect width=%22192%22 height=%22192%22 fill=%22%23f4ede0%22/><circle cx=%2296%22 cy=%2296%22 r=%2256%22 fill=%22none%22 stroke=%22%232a2520%22 stroke-width=%223%22/><circle cx=%2296%22 cy=%2296%22 r=%2230%22 fill=%22%23ebe1cf%22 stroke=%22%232a2520%22 stroke-width=%221.5%22/></svg>","sizes":"192x192","type":"image/svg+xml"}]}'>
+
+<!-- Apple touch icon (SVG) -->
+<link rel="apple-touch-icon" href='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" fill="%23f4ede0"/><circle cx="96" cy="96" r="56" fill="none" stroke="%232a2520" stroke-width="3"/><circle cx="96" cy="96" r="30" fill="%23ebe1cf" stroke="%232a2520" stroke-width="1.5"/></svg>'>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #f4ede0;
+    --panel: #ebe1cf;
+    --border: #d4c5a8;
+    --border-light: #e0d5bf;
+    --ink: #2a2520;
+    --ink-soft: #5a5040;
+    --muted: #8a7e6c;
+    --very-muted: #b8a890;
+    --accent: #a86040;
+    --warn-bg: #f4e4d4;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overscroll-behavior-y: contain;
+  }
+
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-top: env(safe-area-inset-top);
+  }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: inherit;
+    padding: 0;
+  }
+
+  input, textarea {
+    font-family: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  input:focus, textarea:focus { outline: none; }
+
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 32px 24px;
+    padding-bottom: 140px;
+  }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+  .fade-in { animation: fadeIn 0.5s ease-out; }
+  .pulse { animation: pulse 1.5s ease-in-out infinite; }
+
+  /* Typography */
+  .label {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .label-loose { letter-spacing: 0.2em; }
+
+  h1.headline {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 42px;
+    font-weight: 400;
+    margin: 0;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  h1.headline em { font-weight: 300; }
+
+  /* Cards / panels */
+  .panel {
+    padding: 24px;
+    background: var(--panel);
+    border-radius: 2px;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    width: 100%;
+    padding: 18px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: var(--ink);
+    border-radius: 2px;
+    transition: transform 0.15s, opacity 0.2s;
+  }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-primary:disabled {
+    background: var(--very-muted);
+    cursor: not-allowed;
+  }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 16px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .btn-text {
+    width: 100%;
+    padding: 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: transparent;
+  }
+
+  /* Inputs */
+  .text-input {
+    width: 100%;
+    padding: 12px 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    color: var(--ink);
+  }
+
+  textarea.text-input {
+    resize: none;
+    line-height: 1.5;
+    font-size: 17px;
+    padding: 16px;
+  }
+
+  /* Camera FAB */
+  .fab-container {
+    position: fixed;
+    bottom: calc(32px + env(safe-area-inset-bottom));
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .fab {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(42, 37, 32, 0.25);
+    pointer-events: auto;
+    transition: transform 0.2s;
+  }
+  .fab:active { transform: scale(0.95); }
+
+  /* Meal entry */
+  .entry {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .entry-img {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .entry-content { flex: 1; min-width: 0; }
+  .entry-time {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .entry-time .after-cutoff {
+    margin-left: 8px;
+    color: var(--accent);
+    font-style: italic;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .entry-items {
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    line-height: 1.3;
+    margin-top: 4px;
+  }
+  .entry-note {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+    font-style: italic;
+  }
+  .entry-feeling {
+    font-family: 'Fraunces', serif;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 6px;
+    font-style: italic;
+    line-height: 1.4;
+  }
+  .entry-cal {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .entry-delete {
+    color: var(--very-muted);
+    padding: 4px;
+    flex-shrink: 0;
+  }
+
+  /* History entries (smaller) */
+  .hist-entry {
+    display: flex;
+    gap: 12px;
+    padding: 12px 0;
+    align-items: flex-start;
+  }
+  .hist-entry img {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Center loading */
+  .center-screen {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+  }
+
+  /* Cutoff prompt */
+  .cutoff-prompt {
+    padding: 20px;
+    background: var(--warn-bg);
+    border: 1px solid rgba(168, 96, 64, 0.2);
+    border-radius: 2px;
+    margin-bottom: 20px;
+  }
+  .cutoff-text {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 15px;
+    color: var(--ink-soft);
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+  .cutoff-buttons {
+    display: flex;
+    gap: 8px;
+  }
+  .cutoff-btn {
+    flex: 1;
+    padding: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    background: transparent;
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+  }
+  .cutoff-btn.active {
+    color: var(--bg);
+    background: var(--ink);
+  }
+
+  /* Hidden file input */
+  .file-hidden { display: none; }
+
+  /* Empty state */
+  .empty {
+    padding: 40px 0;
+    text-align: center;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--muted);
+  }
+
+  /* Install hint */
+  .install-hint {
+    position: fixed;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    background: var(--ink);
+    color: var(--bg);
+    padding: 14px 16px;
+    border-radius: 2px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    line-height: 1.4;
+    z-index: 100;
+    display: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  }
+  .install-hint.show { display: block; }
+  .install-hint button {
+    color: var(--bg);
+    text-decoration: underline;
+    margin-left: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<input type="file" id="fileInput" class="file-hidden" accept="image/*" capture="environment">
+
+<div class="install-hint" id="installHint">
+  Install this app: tap Share → Add to Home Screen
+  <button onclick="document.getElementById('installHint').classList.remove('show')">dismiss</button>
+</div>
+
+<script>
+// ============= STATE =============
+let state = {
+  view: 'home',
+  entries: [],
+  currentImage: null,
+  currentEstimate: null,
+  userNote: '',
+  hideNumber: false,
+  afterCutoff: false,
+  logAnyway: null,
+  pendingEntry: null,
+  feelingText: '',
+  showTotal: false,
+  estimating: false,
+  error: null,
+};
+
+// ============= STORAGE =============
+const STORAGE_KEY = 'plate_entries_v1';
+
+function loadEntries() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) state.entries = JSON.parse(raw);
+  } catch (e) { console.error(e); }
+}
+
+function saveEntries() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.entries));
+  } catch (e) { console.error(e); }
+}
+
+// ============= ICONS (inline SVG) =============
+const icons = {
+  camera: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>',
+  eye: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
+  x: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
+  chevronRight: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>',
+  chevronLeft: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>',
+  loader: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>',
+};
+
+// ============= HELPERS =============
+function escapeHtml(s) {
+  if (!s) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function formatTime(ts) {
+  return new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+function formatDate(ts) {
+  const d = new Date(ts);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return 'Today';
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+function getTodayEntries() {
+  const today = new Date().toDateString();
+  return state.entries.filter(e => new Date(e.timestamp).toDateString() === today);
+}
+
+function getTodayTotal() {
+  return getTodayEntries().reduce((sum, e) => sum + (e.calories || 0), 0);
+}
+
+function getSevenDayAvg() {
+  const now = Date.now();
+  const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+  const recent = state.entries.filter(e => e.timestamp >= sevenDaysAgo);
+  if (recent.length === 0) return null;
+  const dayTotals = {};
+  recent.forEach(e => {
+    const day = new Date(e.timestamp).toDateString();
+    dayTotals[day] = (dayTotals[day] || 0) + (e.calories || 0);
+  });
+  const days = Object.values(dayTotals);
+  if (days.length === 0) return null;
+  return Math.round(days.reduce((a, b) => a + b, 0) / days.length);
+}
+
+function getGroupedEntries() {
+  const grouped = {};
+  state.entries.forEach(entry => {
+    const date = formatDate(entry.timestamp);
+    if (!grouped[date]) grouped[date] = [];
+    grouped[date].push(entry);
+  });
+  return grouped;
+}
+
+// ============= API CONFIG =============
+// User must set their Anthropic API key here.
+// Without a key, calorie estimation is skipped and only the photo is logged.
+const ANTHROPIC_API_KEY = localStorage.getItem('anthropic_api_key') || '';
+
+async function estimateCalories(dataUrl, mediaType) {
+  state.error = null;
+  if (!ANTHROPIC_API_KEY) {
+    state.currentEstimate = {
+      items: ['photo logged'],
+      low: 0, mid: 0, high: 0,
+      note: 'add API key in settings to enable calorie estimates'
+    };
+    state.view = 'result';
+    render();
+    return;
+  }
+
+  try {
+    const base64Data = dataUrl.split(',')[1];
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{
+          role: "user",
+          content: [
+            { type: "image", source: { type: "base64", media_type: mediaType, data: base64Data } },
+            { type: "text", text: `You are estimating calories for a meal photo. The user follows a clean-eating Bangladeshi diet (lal chal red parboiled rice, mustard oil, ghee, eggs, dal, fish, beef, vegetables — no refined sugar or processed oils). Identify the items, estimate portions, give a calorie range and midpoint, plus one short qualitative observation.
+
+Respond ONLY with a JSON object in this exact format, no preamble, no markdown fences:
+{
+  "items": ["item 1", "item 2"],
+  "low": 400,
+  "mid": 500,
+  "high": 600,
+  "note": "short observation, max 10 words, e.g. 'heavy on oil' or 'good protein balance'"
+}` }
+          ]
+        }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content
+      .filter(b => b.type === 'text')
+      .map(b => b.text)
+      .join('')
+      .replace(/```json|```/g, '')
+      .trim();
+    const parsed = JSON.parse(text);
+    state.currentEstimate = parsed;
+    state.view = 'result';
+    render();
+  } catch (err) {
+    console.error(err);
+    state.error = 'Could not estimate. You can still log the photo.';
+    state.currentEstimate = { items: ['unknown'], low: 0, mid: 0, high: 0, note: '' };
+    state.view = 'result';
+    render();
+  }
+}
+
+// ============= EVENT HANDLERS =============
+function handleFileSelect(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    state.currentImage = e.target.result;
+    const now = new Date();
+    const isAfter = now.getHours() > 20 || (now.getHours() === 20 && now.getMinutes() >= 30);
+    state.afterCutoff = isAfter;
+    state.logAnyway = null;
+    state.userNote = '';
+    state.hideNumber = false;
+    state.view = 'estimating';
+    render();
+    estimateCalories(e.target.result, file.type);
+  };
+  reader.readAsDataURL(file);
+  event.target.value = ''; // allow re-select same file
+}
+
+function openCamera() {
+  document.getElementById('fileInput').click();
+}
+
+function showTotal(show) {
+  state.showTotal = show;
+  render();
+}
+
+function setView(v) {
+  state.view = v;
+  render();
+}
+
+function deleteEntry(id) {
+  state.entries = state.entries.filter(e => e.id !== id);
+  saveEntries();
+  render();
+}
+
+function toggleHideNumber() {
+  state.hideNumber = !state.hideNumber;
+  render();
+}
+
+function setLogAnyway(val) {
+  state.logAnyway = val;
+  render();
+}
+
+function updateUserNote(val) {
+  state.userNote = val;
+  // Don't re-render on every keystroke; let the input manage itself
+}
+
+function updateFeelingText(val) {
+  state.feelingText = val;
+}
+
+function proceedToReflection() {
+  state.pendingEntry = {
+    id: Date.now(),
+    timestamp: Date.now(),
+    image: state.currentImage,
+    items: state.currentEstimate?.items || [],
+    calories: state.currentEstimate?.mid || 0,
+    low: state.currentEstimate?.low || 0,
+    high: state.currentEstimate?.high || 0,
+    aiNote: state.currentEstimate?.note || '',
+    userNote: state.userNote.trim(),
+    afterCutoff: state.afterCutoff,
+    loggedAnyway: state.afterCutoff ? state.logAnyway : null,
+    hiddenAtLog: state.hideNumber,
+    feeling: '',
+  };
+  state.feelingText = '';
+  state.view = 'reflection';
+  render();
+}
+
+function finalSave(skipFeeling) {
+  const entry = { ...state.pendingEntry, feeling: skipFeeling ? '' : state.feelingText.trim() };
+  state.entries = [entry, ...state.entries];
+  saveEntries();
+  state.currentImage = null;
+  state.currentEstimate = null;
+  state.pendingEntry = null;
+  state.feelingText = '';
+  state.userNote = '';
+  state.view = 'home';
+  render();
+}
+
+function cancelLog() {
+  state.currentImage = null;
+  state.currentEstimate = null;
+  state.view = 'home';
+  render();
+}
+
+function setApiKey() {
+  const key = prompt('Paste your Anthropic API key (stored only on this device):');
+  if (key) {
+    localStorage.setItem('anthropic_api_key', key.trim());
+    location.reload();
+  }
+}
+
+// ============= RENDER =============
+function render() {
+  const app = document.getElementById('app');
+
+  if (state.view === 'home') {
+    app.innerHTML = renderHome();
+  } else if (state.view === 'history') {
+    app.innerHTML = renderHistory();
+  } else if (state.view === 'estimating') {
+    app.innerHTML = renderEstimating();
+  } else if (state.view === 'result') {
+    app.innerHTML = renderResult();
+    // Re-attach event listeners for inputs
+    const noteInput = document.getElementById('userNoteInput');
+    if (noteInput) {
+      noteInput.value = state.userNote;
+      noteInput.addEventListener('input', (e) => { state.userNote = e.target.value; });
+    }
+  } else if (state.view === 'reflection') {
+    app.innerHTML = renderReflection();
+    const ta = document.getElementById('feelingTextarea');
+    if (ta) {
+      ta.value = state.feelingText;
+      ta.addEventListener('input', (e) => { state.feelingText = e.target.value; });
+      setTimeout(() => ta.focus(), 100);
+    }
+  }
+}
+
+function renderHome() {
+  const today = getTodayEntries();
+  const total = getTodayTotal();
+  const dateStr = new Date().toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+  const apiKeySet = !!ANTHROPIC_API_KEY;
+
+  return `
+    <div class="container fade-in">
+      <header style="margin-bottom: 40px;">
+        <div class="label label-loose" style="margin-bottom: 8px;">${dateStr}</div>
+        <h1 class="headline">The day's<br><em>plate</em></h1>
+      </header>
+
+      <div class="panel" style="margin-bottom: 32px;">
+        <div class="label" style="margin-bottom: 12px;">
+          ${today.length} ${today.length === 1 ? 'meal' : 'meals'} logged
+        </div>
+        ${state.showTotal ? `
+          <div class="fade-in">
+            <div style="font-family: 'Fraunces', serif; font-size: 48px; font-weight: 400; line-height: 1;">${total}</div>
+            <div style="font-family: 'Inter', sans-serif; font-size: 13px; color: var(--muted); margin-top: 6px;">
+              estimated calories today
+            </div>
+            <button onclick="showTotal(false)" style="margin-top: 12px; font-family: 'Inter', sans-serif; font-size: 12px; color: var(--muted); text-decoration: underline;">
+              hide
+            </button>
+          </div>
+        ` : `
+          <button onclick="showTotal(true)" style="font-family: 'Fraunces', serif; font-size: 20px; font-style: italic; font-weight: 300; color: var(--ink-soft); display: flex; align-items: center; gap: 8px;">
+            ${icons.eye}
+            show today's total
+          </button>
+        `}
+      </div>
+
+      ${today.length > 0 ? `
+        <div style="margin-bottom: 32px;">
+          ${today.map(entry => renderEntry(entry, true)).join('')}
+        </div>
+      ` : `
+        <div class="empty">nothing yet today</div>
+      `}
+
+      <button onclick="setView('history')" class="btn-secondary">
+        <span>past days</span>
+        ${icons.chevronRight}
+      </button>
+
+      ${!apiKeySet ? `
+        <button onclick="setApiKey()" style="width: 100%; margin-top: 16px; padding: 12px; font-family: 'Inter', sans-serif; font-size: 11px; color: var(--accent); text-decoration: underline;">
+          set up API key for calorie estimation
+        </button>
+      ` : ''}
+    </div>
+
+    <div class="fab-container">
+      <button class="fab" onclick="openCamera()" aria-label="capture meal">
+        ${icons.camera}
+      </button>
+    </div>
+  `;
+}
+
+function renderEntry(entry, large = false) {
+  const showCal = state.showTotal && entry.calories > 0;
+  return `
+    <div class="entry">
+      <img src="${entry.image}" alt="" class="entry-img">
+      <div class="entry-content">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px;">
+          <div class="entry-time">
+            ${formatTime(entry.timestamp)}
+            ${entry.afterCutoff ? '<span class="after-cutoff">after 8:30</span>' : ''}
+          </div>
+          ${showCal ? `<div class="entry-cal">~${entry.calories}</div>` : ''}
+        </div>
+        <div class="entry-items">${escapeHtml(entry.items.slice(0, 3).join(', ') || '—')}</div>
+        ${entry.userNote ? `<div class="entry-note">"${escapeHtml(entry.userNote)}"</div>` : ''}
+        ${entry.feeling ? `<div class="entry-feeling">felt: ${escapeHtml(entry.feeling)}</div>` : ''}
+      </div>
+      <button class="entry-delete" onclick="deleteEntry(${entry.id})" aria-label="delete">
+        ${icons.x}
+      </button>
+    </div>
+  `;
+}
+
+function renderHistory() {
+  const grouped = getGroupedEntries();
+  const avg = getSevenDayAvg();
+
+  return `
+    <div class="container fade-in">
+      <header style="margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
+        <button onclick="setView('home')" style="padding: 8px; margin-left: -8px;">
+          ${icons.chevronLeft}
+        </button>
+        <h1 style="font-family: 'Fraunces', serif; font-size: 24px; font-weight: 400; margin: 0;">
+          <em style="font-weight: 300;">past days</em>
+        </h1>
+      </header>
+
+      ${avg !== null ? `
+        <div class="panel" style="margin-bottom: 32px; text-align: center;">
+          <div class="label" style="margin-bottom: 6px;">7-day average</div>
+          <div style="font-family: 'Fraunces', serif; font-size: 36px; font-weight: 400; line-height: 1;">${avg}</div>
+          <div style="font-family: 'Inter', sans-serif; font-size: 12px; color: var(--muted); margin-top: 4px;">kcal per day</div>
+        </div>
+      ` : ''}
+
+      ${Object.keys(grouped).length === 0 ? `
+        <div class="empty">nothing logged yet</div>
+      ` : Object.entries(grouped).map(([date, items]) => {
+        const dayTotal = items.reduce((s, i) => s + (i.calories || 0), 0);
+        return `
+          <div style="margin-bottom: 32px;">
+            <div class="day-header">
+              <h2 style="font-family: 'Fraunces', serif; font-size: 18px; font-weight: 400; margin: 0;">${date}</h2>
+              <div style="font-family: 'Inter', sans-serif; font-size: 11px; color: var(--muted); letter-spacing: 0.1em;">
+                ${items.length} meals · ~${dayTotal} kcal
+              </div>
+            </div>
+            ${items.map(entry => `
+              <div class="hist-entry">
+                <img src="${entry.image}" alt="">
+                <div style="flex: 1; min-width: 0;">
+                  <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px;">
+                    <div style="font-family: 'Inter', sans-serif; font-size: 11px; color: var(--muted);">
+                      ${formatTime(entry.timestamp)}
+                      ${entry.afterCutoff ? '<span style="margin-left: 6px; color: var(--accent); font-style: italic;">after 8:30</span>' : ''}
+                    </div>
+                    <div style="font-family: 'Inter', sans-serif; font-size: 12px; color: var(--muted);">${entry.calories || '—'}</div>
+                  </div>
+                  <div style="font-family: 'Fraunces', serif; font-size: 14px; line-height: 1.3; margin-top: 2px;">
+                    ${escapeHtml(entry.items.slice(0, 3).join(', '))}
+                  </div>
+                  ${entry.userNote ? `<div style="font-family: 'Inter', sans-serif; font-size: 11px; color: var(--ink-soft); margin-top: 3px; font-style: italic;">"${escapeHtml(entry.userNote)}"</div>` : ''}
+                  ${entry.feeling ? `<div style="font-family: 'Fraunces', serif; font-size: 12px; color: var(--muted); margin-top: 4px; font-style: italic; line-height: 1.4;">felt: ${escapeHtml(entry.feeling)}</div>` : ''}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderEstimating() {
+  return `
+    <div class="center-screen fade-in">
+      <img src="${state.currentImage}" alt="" style="max-width: 280px; max-height: 280px; object-fit: cover; border-radius: 2px; margin-bottom: 32px; opacity: 0.6;">
+      <div class="pulse" style="color: var(--muted); margin-bottom: 16px;">${icons.loader}</div>
+      <div class="pulse" style="font-family: 'Fraunces', serif; font-size: 18px; font-style: italic; color: var(--ink-soft);">
+        reading the plate…
+      </div>
+    </div>
+  `;
+}
+
+function renderResult() {
+  if (!state.currentEstimate) return '';
+  const est = state.currentEstimate;
+  const logBtnDisabled = state.afterCutoff && state.logAnyway === null;
+
+  return `
+    <div class="container fade-in">
+      <img src="${state.currentImage}" alt="" style="width: 100%; max-height: 280px; object-fit: cover; border-radius: 2px; margin-bottom: 24px;">
+
+      <div class="label" style="margin-bottom: 8px;">on the plate</div>
+      <div style="font-family: 'Fraunces', serif; font-size: 22px; line-height: 1.3; margin-bottom: 20px; font-weight: 400;">
+        ${escapeHtml(est.items.join(', '))}
+      </div>
+
+      ${!state.hideNumber ? `
+        <div class="panel" style="margin-bottom: 16px; text-align: center;">
+          <div style="font-family: 'Fraunces', serif; font-size: 52px; font-weight: 400; line-height: 1;">${est.mid}</div>
+          <div class="label" style="margin-top: 6px;">estimated kcal</div>
+          ${est.note ? `<div style="font-family: 'Fraunces', serif; font-style: italic; font-size: 14px; color: var(--ink-soft); margin-top: 14px; line-height: 1.4;">${escapeHtml(est.note)}</div>` : ''}
+        </div>
+      ` : `
+        <div class="panel" style="margin-bottom: 16px; text-align: center; padding: 32px 24px; font-family: 'Fraunces', serif; font-style: italic; font-size: 15px; color: var(--ink-soft);">
+          the number is hidden.<br>it will still be saved.
+        </div>
+      `}
+
+      <button onclick="toggleHideNumber()" class="btn-text" style="margin-bottom: 20px;">
+        ${state.hideNumber ? 'show the number' : 'hide the number'}
+      </button>
+
+      <div style="margin-bottom: 20px;">
+        <div class="label" style="margin-bottom: 8px;">add a note (optional)</div>
+        <input type="text" id="userNoteInput" class="text-input" placeholder="extra ghee, larger portion…">
+      </div>
+
+      ${state.afterCutoff ? `
+        <div class="cutoff-prompt">
+          <div class="cutoff-text">kitchen was supposed to be closed.</div>
+          <div class="cutoff-buttons">
+            <button class="cutoff-btn ${state.logAnyway === true ? 'active' : ''}" onclick="setLogAnyway(true)">log anyway</button>
+            <button class="cutoff-btn ${state.logAnyway === false ? 'active' : ''}" onclick="setLogAnyway(false)">log + skip</button>
+          </div>
+        </div>
+      ` : ''}
+
+      ${state.error ? `<div style="font-family: 'Inter', sans-serif; font-size: 12px; color: var(--accent); margin-bottom: 16px; text-align: center;">${escapeHtml(state.error)}</div>` : ''}
+
+      <button onclick="proceedToReflection()" class="btn-primary" ${logBtnDisabled ? 'disabled' : ''}>
+        log this meal
+      </button>
+
+      <button onclick="cancelLog()" class="btn-text" style="margin-top: 8px;">cancel</button>
+    </div>
+  `;
+}
+
+function renderReflection() {
+  return `
+    <div class="container fade-in" style="padding-top: 48px;">
+      <div class="label label-loose" style="margin-bottom: 12px;">one moment</div>
+      <h2 style="font-family: 'Fraunces', serif; font-size: 32px; font-weight: 300; font-style: italic; margin: 0 0 32px 0; line-height: 1.2;">
+        how are you<br>feeling after<br>this meal?
+      </h2>
+
+      <textarea id="feelingTextarea" class="text-input" rows="5" placeholder="…" style="margin-bottom: 24px;"></textarea>
+
+      <button onclick="finalSave(false)" class="btn-primary">save</button>
+      <button onclick="finalSave(true)" class="btn-text" style="margin-top: 8px;">skip</button>
+    </div>
+  `;
+}
+
+// ============= INIT =============
+loadEntries();
+document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+render();
+
+// Show install hint on iOS Safari (non-standalone)
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+if (isIOS && !isStandalone && !localStorage.getItem('install_hint_dismissed')) {
+  setTimeout(() => {
+    document.getElementById('installHint').classList.add('show');
+  }, 2000);
+}
+</script>
+
+</body>
+</html>
